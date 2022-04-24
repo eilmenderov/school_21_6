@@ -22,6 +22,13 @@ volumes:
       device: /home/vagrant/data/monitoring
       type: volume
       o: bind
+  cv-volume:
+    name: cv-volume
+    driver: local
+    driver_opts:
+      device: ./cv
+      type: volume
+      o: bind
 
 networks:
   inception-network:
@@ -37,6 +44,7 @@ services:
     image: nginx42
     volumes:
       - wordpress-volume:/var/www/wordpress
+      - cv-volume:/var/www/cv
     networks:
       - inception-network
     ports:
