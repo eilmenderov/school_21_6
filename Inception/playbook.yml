@@ -1,0 +1,26 @@
+---
+- hosts: "servers"
+  become: true
+  roles:
+  - docker
+  tasks:
+    - name: ping_serv
+      ping:
+
+    - name: Adding user "{{ USERNAME }}" to docker group
+      user:
+        name: "{{ USERNAME }}"
+        groups: "docker"
+        append: "yes"
+
+    - name: Copy local_start
+      copy:
+        src: "./project"
+        dest: "/home/{{ USERNAME }}/"
+        mode: "0644"
+        owner: "{{ USERNAME }}"
+        group: "{{ USERNAME }}"
+
+  vars:
+    USERNAME: "vagrant"
+...

@@ -1,0 +1,225 @@
+version: '3.8'
+
+volumes:
+  mariadb-volume:
+    name: mariadb-volume
+    driver: local
+    driver_opts:
+      device: /home/vagrant/data/database
+      type: volume
+      o: bind
+  wordpress-volume:
+    name: wordpress-volume
+    driver: local
+    driver_opts:
+      device: /home/vagrant/data/wordpress
+      type: volume
+      o: bind
+  monitoring-volume:
+    name: monitoring-volume
+    driver: local
+    driver_opts:
+      device: /home/vagrant/data/monitoring
+      type: volume
+      o: bind
+
+networks:
+  inception-network:
+    name: inception-network
+    driver: bridge
+
+services:
+
+  nginx:
+    container_name: nginx42
+    build:
+      context: ./nginx
+    image: nginx42
+    volumes:
+      - wordpress-volume:/var/www/wordpress
+    networks:
+      - inception-network
+    ports:
+      - "443:443"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 100M
+        reservations:
+          memory: 30M
+    restart: unless-stopped
+
+  mariadb:
+    container_name: mariadb42
+    build:
+      context: ./mariadb
+    image: mariadb42
+    volumes:
+      - mariadb-volume:/var/lib/mysql
+    networks:
+      - inception-network
+    env_file:
+      - ./.env
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 200M
+        reservations:
+          memory: 100M
+    restart: unless-stopped
+
+  wordpress:
+    container_name: wordpress42
+    depends_on:
+      - mariadb
+    build:
+      context: ./wordpress
+    image: wordpress42
+    volumes:
+      - wordpress-volume:/var/www/wordpress
+    networks:
+      - inception-network
+    env_file:
+      - ./.env
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 100M
+        reservations:
+          memory: 50M
+    restart: unless-stopped
+
+  adminer:
+    container_name: adminer42
+    depends_on:
+      - mariadb
+    build:
+      context: ./adminer
+    image: adminer42
+    volumes:
+      - wordpress-volume:/var/www/wordpress
+    networks:
+      - inception-network
+    env_file:
+      - ./.env
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 100M
+        reservations:
+          memory: 50M
+    restart: unless-stopped
+
+  redis:
+    container_name: redis42
+    build:
+      context: ./redis
+    image: redis42
+    networks:
+      - inception-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 100M
+        reservations:
+          memory: 50M
+    restart: unless-stopped
+
+  ftp:
+    container_name: ftp42
+    build:
+      context: ./vsftpd
+    image: ftp42
+    volumes:
+      - wordpress-volume:/var/www/wordpress
+    env_file:
+      - ./.env
+    networks:
+      - inception-network
+    ports:
+      - "21:21"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 100M
+        reservations:
+          memory: 50M
+    restart: unless-stopped
+
+  cadvisor:
+    container_name: cadvisor42
+    build:
+      context: ./cadvisor
+    image: cadvisor42
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+        - inception-network
+    env_file:
+      - ./.env
+    command:
+      - '-port=${CADVISOR_PORT}'
+      - '-url_base_prefix=${CADVISOR_URL_BASE_PREFIX}'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 100M
+        reservations:
+          memory: 50M
+    restart: unless-stopped
+
+  prometheus:
+    container_name: prometheus42
+    build:
+      context: ./prometheus
+    image: prometheus42
+    volumes:
+      - monitoring-volume:/monitor
+    networks:
+      - inception-network
+    env_file:
+      - ./.env
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/monitor/prometheus'
+      - '--storage.tsdb.retention=200h'
+      - '--web.listen-address=:${PROMETHEUS_PORT}'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 100M
+        reservations:
+          memory: 50M
+    restart: unless-stopped
+
+  grafana:
+    container_name: grafana42
+    build:
+      context: ./grafana
+    image: grafana42
+    volumes:
+      - monitoring-volume:/monitor
+    networks:
+        - inception-network
+    env_file:
+      - ./.env
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 150M
+        reservations:
+          memory: 50M
+    restart: unless-stopped

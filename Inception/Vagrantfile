@@ -1,0 +1,19 @@
+Vagrant.configure(2) do |config|
+  config.vm.box = "ubuntu/focal64"
+  config.vm.box_check_update = false
+
+  config.vm.define "inception" do |inception|
+      inception.vm.network  "private_network", ip: "192.168.44.3", bridge: "enp44s0"
+      inception.vm.hostname = "inception"
+      inception.vm.provider "virtualbox" do |vb|
+         vb.memory = "4096"
+         vb.cpus= 2
+         vb.gui = false
+         vb.name = "inception-server"
+      end
+      inception.vm.provision "shell", inline: <<-SHELL
+         sed -i 's/ChallengeResponseAuthentication no/ChallengeResponseAuthentication yes/#g' /etc/ssh/sshd_config
+        service ssh restart
+      SHELL
+  end
+end
