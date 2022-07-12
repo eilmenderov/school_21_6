@@ -1,0 +1,6 @@
+https://vleida.42.fr
+https://vleida.42.fr/cv
+https://vleida.42.fr/admminer user - wp, pass - wp_pwd, host - mariadb42, db - wordpress
+https://vleida.42.fr/grafana
+
+ftp - lftp -u wp 192.168.56.3 ; pass

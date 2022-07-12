@@ -1,0 +1,10 @@
+---
+# vars file for create_service
+    INSTALL_PACKAGES:
+                    - net-tools
+                    - curl
+                    - tree
+                    - htop
+                    - python3-pip
+                    - unzip
+...

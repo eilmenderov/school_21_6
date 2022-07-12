@@ -1,0 +1,17 @@
+---
+# install
+  - name: Update apt packages
+    apt:
+      update_cache: "yes"
+      force_apt_get: "yes"
+  
+  - name: Install packages
+    apt:
+      name: "{{ INSTALL_PACKAGES }}"
+      state: present
+      force_apt_get: "yes"
+
+  - name: Upgrade all apt packages
+    apt: upgrade=dist force_apt_get=yes
+
+...
